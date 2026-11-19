@@ -1,5 +1,5 @@
 // 家底 Service Worker —— 更新产品时把版本号 +1 即可强制刷新缓存
-const CACHE='jiadi-v6';
+const CACHE='jiadi-v7';
 const ASSETS=['./','./index.html','./manifest.json','./icon-192.png','./icon-512.png'];
 self.addEventListener('install',function(e){
   e.waitUntil(caches.open(CACHE).then(function(c){return c.addAll(ASSETS)}).then(function(){return self.skipWaiting()}));
