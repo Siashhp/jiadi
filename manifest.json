@@ -1,0 +1,15 @@
+{
+  "name": "家底 · 家庭资产清点",
+  "short_name": "家底",
+  "description": "只记录，不估价。家庭物品与事件存证，数据仅存本机。",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f7f8fa",
+  "theme_color": "#3b6fd9",
+  "lang": "zh-CN",
+  "icons": [
+    {"src": "./icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "./icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}
+  ]
+}

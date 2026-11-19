@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>家底 · 家庭资产清点</title>
+<meta name="theme-color" content="#3b6fd9">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="家底">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+  :root{
+    --bg:#f7f8fa; --card:#fff; --line:#e8eaed; --ink:#1e293b; --muted:#64748b;
+    --brand:#3b6fd9; --brand-d:#2d5ab8; --brand-soft:#eef4fd; --warn:#d97706; --warn-soft:#fef9ee;
+    --ok:#16a34a; --ok-soft:#eefbf3; --danger:#dc2626; --danger-soft:#fef2f2;
+    --shadow:0 1px 4px rgba(0,0,0,.05); --shadow-md:0 4px 16px rgba(0,0,0,.08);
+    --radius:12px; --radius-sm:10px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font:14px/1.65 -apple-system,"PingFang SC","Noto Sans SC","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 24px 80px}
+
+  /* Header */
+  header{background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20;backdrop-filter:blur(8px)}
+  .hd{max-width:1080px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .logo{font-size:20px;font-weight:800;color:var(--ink);display:flex;align-items:center;gap:6px}
+  .logo-icon{width:28px;height:28px;background:var(--brand);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;font-weight:700}
+  .logo span{color:var(--brand)}
+  .logo-sub{font-size:12px;color:var(--muted);border-left:1px solid var(--line);padding-left:14px}
+  .privacy{margin-left:auto;display:flex;align-items:center;gap:7px;background:var(--ok-soft);color:var(--ok);
+    padding:7px 14px;border-radius:20px;font-size:12px;font-weight:600}
+  .privacy i{width:7px;height:7px;border-radius:50%;background:var(--ok);display:inline-block;animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+  /* Hero */
+  .hero{padding:32px 0 12px}
+  .hero h1{margin:0 0 10px;font-size:25px;font-weight:700;letter-spacing:.3px;color:var(--ink);line-height:1.4}
+  .hero p{margin:0;color:var(--muted);max-width:680px;font-size:14.5px;line-height:1.7}
+  .hero .kicker{color:var(--brand);font-weight:700;font-size:12px;letter-spacing:2.5px;margin-bottom:10px;text-transform:uppercase}
+
+  /* Tip */
+  .tip{background:var(--brand-soft);border-radius:var(--radius-sm);padding:13px 16px;font-size:13px;color:var(--brand-d);margin:18px 0 0;line-height:1.7;border-left:3px solid var(--brand)}
+  .notice{background:var(--warn-soft);border:1px solid rgba(217,119,6,.25);border-radius:var(--radius-sm);padding:12px 16px;font-size:12.5px;color:#92400e;line-height:1.85;margin-top:12px}
+  /* 额度状态条 */
+  .plan-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--card);border:1px solid var(--line);border-radius:var(--radius-sm);padding:11px 16px;margin-top:12px}
+  .plan-tag{font-size:11.5px;font-weight:700;padding:3px 10px;border-radius:20px;background:#f1f5f9;color:var(--muted);white-space:nowrap}
+  .plan-tag.pro{background:var(--brand-soft);color:var(--brand-d)}
+  .plan-desc{font-size:12.5px;color:var(--muted);flex:1;min-width:180px;line-height:1.6}
+  .plan-desc b{color:var(--ink)}
+  .plan-bar .btn{flex-shrink:0}
+  /* 升级弹窗 */
+  .upgrade-field{display:flex;gap:8px;margin:14px 0 0}
+  .upgrade-field input{flex:1;border:1px solid var(--line);border-radius:var(--radius-sm);padding:10px 12px;font-size:13px;font-family:inherit;outline:none}
+  .upgrade-field input:focus{border-color:var(--brand)}
+  .upgrade-demo{font-size:11.5px;color:var(--muted);margin-top:10px;line-height:1.7}
+  .upgrade-demo code{background:#f1f5f9;padding:2px 6px;border-radius:4px;color:var(--brand-d);font-size:11.5px}
+  .notice div+div{margin-top:3px}
+  .notice b{color:#92400e;font-weight:700}
+  /* Backup nudge */
+  .nudge{background:var(--ok-soft);border:1px solid rgba(22,163,74,.28);border-radius:var(--radius-sm);padding:12px 16px;font-size:13px;color:#166534;line-height:1.7;margin:14px 0 0;display:none;align-items:center;gap:12px;flex-wrap:wrap}
+  .nudge.on{display:flex}
+  .nudge .ndot{width:9px;height:9px;border-radius:50%;background:var(--ok);flex-shrink:0;box-shadow:0 0 0 4px rgba(22,163,74,.12)}
+  .nudge .nmsg{flex:1;min-width:220px}
+  .nudge .nmsg b{color:#166534}
+  .nudge .nact{display:flex;gap:8px}
+  /* Linked items */
+  .linkbox{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+  .linkbox label{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--ink);background:#fafbfc;border:1px solid var(--line);border-radius:var(--radius-sm);padding:7px 11px;cursor:pointer;transition:all .15s;margin:0;font-weight:400}
+  .linkbox label:hover{border-color:var(--brand);background:var(--brand-soft)}
+  .linkbox label.sel{border-color:var(--brand);background:var(--brand-soft);color:var(--brand-d);font-weight:600}
+  .linkbox input{width:auto;margin:0;accent-color:var(--brand)}
+  .link-empty{font-size:12px;color:var(--muted)}
+  .linked-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+  .linked-chip{font-size:11.5px;color:var(--brand);background:var(--brand-soft);border-radius:20px;padding:4px 11px;cursor:pointer;font-weight:600}
+  .linked-chip:hover{background:#dde9fc}
+
+  /* Tabs */
+  .tabs{display:flex;gap:4px;margin:26px 0 18px;background:var(--card);border-radius:var(--radius-sm);padding:4px;border:1px solid var(--line)}
+  .tab{padding:10px 22px;border:none;border-radius:6px;background:none;cursor:pointer;
+    font-weight:600;color:var(--muted);font-size:13.5px;transition:all .2s ease-out;flex:1;text-align:center}
+  .tab:hover{color:var(--ink)}
+  .tab.on{color:var(--brand);background:var(--brand-soft);box-shadow:0 1px 3px rgba(59,111,217,.1)}
+
+  /* Stats */
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;box-shadow:var(--shadow);transition:box-shadow .2s}
+  .stat:hover{box-shadow:var(--shadow-md)}
+  .stat b{display:block;font-size:28px;color:var(--brand);line-height:1.2;font-weight:700}
+  .stat.warn b{color:var(--warn)}
+  .stat span{color:var(--muted);font-size:12px;margin-top:4px;display:block}
+
+  /* Toolbar */
+  .bar{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
+  .search-box{display:flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--line);border-radius:var(--radius-sm);padding:0 12px;margin-left:auto;transition:border-color .2s}
+  .search-box:focus-within{border-color:var(--brand)}
+  .search-box svg{color:var(--muted);flex-shrink:0}
+  .search-box input{border:none;background:none;padding:9px 4px;font:inherit;font-size:13px;color:var(--ink);outline:none;width:160px}
+  .search-box input::placeholder{color:var(--muted)}
+
+  /* Buttons */
+  button{font:inherit;cursor:pointer}
+  .btn{background:var(--brand);color:#fff;border:none;border-radius:var(--radius-sm);padding:10px 18px;font-weight:600;font-size:13px;transition:all .2s ease-out;display:inline-flex;align-items:center;gap:6px}
+  .btn:hover{background:var(--brand-d);transform:translateY(-1px);box-shadow:0 2px 8px rgba(59,111,217,.25)}
+  .btn:active{transform:translateY(0)}
+  .btn.ghost{background:var(--card);color:var(--ink);border:1px solid var(--line)}
+  .btn.ghost:hover{background:#fafbfc;border-color:#d0d5dd;box-shadow:none;transform:translateY(-1px)}
+  .btn.warn{background:var(--warn-soft);color:var(--warn);border:1px solid transparent}
+  .btn.warn:hover{background:#fef3c7;box-shadow:none;transform:translateY(-1px)}
+  .btn.sm{padding:6px 13px;font-size:12px;border-radius:6px}
+  .btn.danger{background:var(--danger-soft);color:var(--danger);border:1px solid transparent}
+  .btn.danger:hover{background:#fee2e2;box-shadow:none;transform:none}
+
+  /* Panel */
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:20px;margin-bottom:16px;box-shadow:var(--shadow)}
+  .panel h2{margin:0 0 4px;font-size:17px;font-weight:700}
+  .panel .psub{color:var(--muted);font-size:12.5px;margin-bottom:16px}
+
+  /* Grid */
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .grid.two{grid-template-columns:repeat(2,1fr)}
+  label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px;font-weight:500}
+  input,select,textarea{width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:var(--radius-sm);font:inherit;background:var(--card);color:var(--ink);font-size:13px;transition:border-color .2s,box-shadow .2s}
+  input:focus,select:focus,textarea:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(59,111,217,.1);outline:none}
+  textarea{resize:vertical;min-height:64px}
+  .fld{margin-bottom:4px}
+
+  /* Photo slots */
+  .shots{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:8px}
+  .shot{border:1.5px dashed var(--line);border-radius:var(--radius-sm);height:92px;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;overflow:hidden;position:relative;cursor:pointer;color:var(--muted);font-size:12px;text-align:center;gap:4px;transition:all .2s}
+  .shot:hover{border-color:var(--brand);color:var(--brand);background:var(--brand-soft)}
+  .shot img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+  .shot .lbl{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.55);color:#fff;font-size:11px;padding:3px}
+  .shot input{display:none}
+  .hint{font-size:12px;color:var(--muted);margin-top:10px;line-height:1.7}
+
+  /* Tags */
+  .tag{font-size:11px;padding:3px 10px;border-radius:20px;font-weight:600;display:inline-block}
+  .tag.receipt{background:var(--ok-soft);color:var(--ok)}
+  .tag.none{background:var(--warn-soft);color:var(--warn)}
+  .tag.gray{background:#f1f5f9;color:var(--muted)}
+
+  /* Table */
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{text-align:left;padding:10px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+  th{color:var(--muted);font-weight:600;background:#fafbfc;font-size:12px}
+  tr{transition:background .15s}
+  tbody tr:hover{background:#fafbfc}
+  td.evid{cursor:pointer;color:var(--brand);font-weight:600}
+  td.evid:hover{text-decoration:underline}
+  .empty{text-align:center;color:var(--muted);padding:40px 0;font-size:13.5px}
+  .rowact{display:flex;gap:4px}
+  .rowact button{border:none;background:none;color:var(--muted);font-size:12px;padding:4px 8px;border-radius:4px;transition:all .15s}
+  .rowact button:hover{background:var(--danger-soft);color:var(--danger)}
+  .rowact button.edit-btn:hover{background:var(--brand-soft);color:var(--brand)}
+
+  /* Callout */
+  .callout{background:var(--brand-soft);border-radius:var(--radius-sm);padding:12px 16px;font-size:13px;color:var(--brand-d);margin-bottom:16px;line-height:1.7}
+
+  /* Modal */
+  .mask{position:fixed;inset:0;background:rgba(15,23,42,.45);display:none;align-items:center;justify-content:center;z-index:50;padding:20px;backdrop-filter:blur(2px)}
+  .mask.on{display:flex;animation:fadeIn .2s ease-out}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .modal{background:var(--card);border-radius:var(--radius);max-width:720px;width:100%;max-height:88vh;overflow:auto;padding:28px;position:relative;box-shadow:var(--shadow-md);animation:slideUp .2s ease-out}
+  @keyframes slideUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+  .modal h3{margin:0 0 6px;font-size:17px;font-weight:700}
+  .modal .sub{color:var(--muted);font-size:13px;margin-bottom:20px;line-height:1.6}
+  .modal .close{position:absolute;right:18px;top:14px;border:none;background:none;font-size:22px;color:var(--muted);line-height:1;width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+  .modal .close:hover{background:#f1f5f9;color:var(--ink)}
+  .evi-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+  .evi-grid figure{margin:0}
+  .evi-grid img{width:100%;border-radius:var(--radius-sm);border:1px solid var(--line)}
+  .evi-grid figcaption{font-size:11.5px;color:var(--muted);text-align:center;margin-top:5px}
+
+  /* Checklist */
+  .checklist{list-style:none;padding:0;margin:12px 0 0}
+  .checklist li{padding:10px 14px;background:#fafbfc;border:1px solid var(--line);border-radius:var(--radius-sm);margin-bottom:8px;font-size:13px;display:flex;align-items:center;gap:10px;transition:background .15s}
+  .checklist li:hover{background:#f1f5f9}
+  .checklist li:before{content:"";width:8px;height:8px;border-radius:50%;border:2px solid var(--warn);flex-shrink:0}
+  .checklist li.done:before{border-color:var(--ok);background:var(--ok)}
+
+  /* Filter chips */
+  .filters{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px}
+  .chip{border:1px solid var(--line);background:var(--card);color:var(--muted);border-radius:20px;padding:6px 14px;font-size:12.5px;font-weight:600;cursor:pointer;transition:all .2s ease-out}
+  .chip:hover{border-color:var(--brand);color:var(--brand)}
+  .chip.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+  /* Data management */
+  .data-section{margin-top:20px;padding-top:18px;border-top:1px solid var(--line)}
+  .data-section h3{font-size:14px;margin-bottom:10px;color:var(--ink)}
+  .data-actions{display:flex;gap:8px;flex-wrap:wrap}
+
+  /* Onboard */
+  .onboard-step{display:none}
+  .onboard-step.on{display:block;animation:fadeIn .2s ease-out}
+  .onboard-ill{background:linear-gradient(135deg,var(--brand-soft),#f0f7ff);border-radius:var(--radius);height:120px;display:flex;align-items:center;justify-content:center;
+    font-size:14px;color:var(--brand-d);font-weight:600;text-align:center;padding:20px;margin-bottom:18px;border:1px solid rgba(59,111,217,.1)}
+  .dots{text-align:center;margin-top:14px;color:var(--muted);font-size:12px}
+  .dots span{display:inline-flex;gap:6px}
+  .dots .dot{width:8px;height:8px;border-radius:50%;background:var(--line);transition:all .2s}
+  .dots .dot.on{background:var(--brand);width:20px;border-radius:4px}
+
+  /* Footer */
+  .foot{color:var(--muted);font-size:12px;margin-top:30px;border-top:1px solid var(--line);padding-top:18px;line-height:1.9}
+  .foot a{color:var(--brand);text-decoration:none}
+  .foot a:hover{text-decoration:underline}
+
+  /* Toast */
+  .toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(16px);background:var(--ink);color:#fff;
+    padding:12px 24px;border-radius:var(--radius-sm);font-size:13px;opacity:0;transition:all .25s ease-out;z-index:90;pointer-events:none;box-shadow:var(--shadow-md)}
+  .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  .printonly{display:none}
+
+  /* Responsive */
+  @media(max-width:760px){
+    .grid,.grid.two,.stats{grid-template-columns:1fr}
+    .shots{grid-template-columns:repeat(2,1fr)}
+    .hero h1{font-size:21px}
+    .hd{padding:12px 16px}
+    .wrap{padding:0 16px 60px}
+    .search-box{margin-left:0;width:100%;margin-top:8px}
+    .search-box input{width:100%}
+    .bar{gap:6px}
+    .btn{padding:9px 14px;font-size:12.5px}
+  }
+  @media print{
+    header,.tabs,.bar,.foot,.privacy,.hero,.tip,.notice,.nudge,.mask,.toast,.onboard,.search-box,.data-section{display:none!important}
+    body{background:#fff}.wrap{padding:0}
+    .printonly{display:block}
+    .panel{border:none;box-shadow:none;padding:0;margin:0 0 18px}
+    .room-block{page-break-inside:avoid;margin-bottom:18px}
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="hd">
+    <div class="logo">
+      <div class="logo-icon">家</div>
+      <div>家<span>底</span></div>
+    </div>
+    <div class="logo-sub">只记录，不估价</div>
+    <div class="privacy"><i></i>仅存本机 · 不上传 · 无需账号</div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="hero">
+    <div class="kicker">Household Inventory</div>
+    <h1>把家底理清楚，心里更踏实</h1>
+    <p>把家里每样东西连同照片、来源和凭证一起记清楚。需要时，随时拿得出来。只记录"有什么"，不猜"值多少"。</p>
+  </div>
+
+  <div class="tip" id="firstTip">
+    建议先从一个房间开始（如客厅，20-30 件，约 10 分钟）。完成率比覆盖面更重要。没有凭证的物品——二手、赠送、继承、定制、结婚收礼——值得优先记录，因为这些很难查到订单。
+  </div>
+  <div style="margin-top:10px"><button class="btn ghost sm" onclick="openOnboard()">查看使用引导</button></div>
+
+  <div class="notice">
+    <div>① <b>请用系统浏览器打开更稳妥</b>：微信内置浏览器可能清理本机记录。</div>
+    <div>② <b>记得定期导出备份</b>：在下方「数据管理」点「备份数据」存一份，换设备或清缓存前先导出。</div>
+  </div>
+
+  <div class="plan-bar" id="planBar">
+    <span class="plan-tag" id="planTag">免费版</span>
+    <span class="plan-desc" id="planDesc">已建档 0 / 3 件。免费版最多建档 3 件，编辑和导出不限。</span>
+    <button class="btn sm" id="planBtn" onclick="openUpgrade()">升级专业版</button>
+  </div>
+
+  <div class="nudge" id="backupNudge">
+    <span class="ndot"></span>
+    <span class="nmsg" id="nudgeMsg"></span>
+    <span class="nact">
+      <button class="btn sm" onclick="nudgeBackup()">立即备份</button>
+      <button class="btn ghost sm" onclick="nudgeLater()">稍后再说</button>
+    </span>
+  </div>
+
+  <div class="tabs">
+    <button class="tab on" data-t="asset" onclick="switchTab('asset')">物品清点</button>
+    <button class="tab" data-t="event" onclick="switchTab('event')">事件存证</button>
+  </div>
+
+  <!-- 资产 -->
+  <div id="view-asset">
+    <div class="stats">
+      <div class="stat"><b id="s-count">0</b><span>已建档物品</span></div>
+      <div class="stat"><b id="s-receipt">0</b><span>有凭证</span></div>
+      <div class="stat warn"><b id="s-noreceipt">0</b><span>待补凭证</span></div>
+    </div>
+    <div class="bar">
+      <button class="btn" onclick="openForm('asset')">+ 建档物品</button>
+      <button class="btn ghost" onclick="loadDemo()">载入示例</button>
+      <button class="btn warn" onclick="openReview()">定期复核</button>
+      <button class="btn ghost" onclick="exportCSV('asset')">导出 CSV</button>
+      <button class="btn ghost" onclick="window.print()">打印 / PDF</button>
+      <div class="search-box">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input id="searchInput" placeholder="搜索物品..." oninput="render()">
+      </div>
+    </div>
+    <div class="filters" id="filters">
+      <button class="chip on" data-f="all" onclick="setFilter('all')">全部</button>
+      <button class="chip" data-f="noreceipt" onclick="setFilter('noreceipt')">待补凭证</button>
+      <button class="chip" data-f="used" onclick="setFilter('used')">二手/赠予/继承</button>
+    </div>
+    <div class="panel">
+      <h2>物品清单</h2>
+      <div class="psub">按房间分组展示，点击证据栏可查看照片</div>
+      <div id="assetTable"></div>
+      <div class="printonly" id="assetSign"></div>
+    </div>
+  </div>
+
+  <!-- 事件 -->
+  <div id="view-event" style="display:none">
+    <div class="stats">
+      <div class="stat"><b id="e-count">0</b><span>已建档事件</span></div>
+      <div class="stat"><b id="e-photo">0</b><span>证据照片</span></div>
+      <div class="stat warn"><b id="e-missing">0</b><span>待补充环节</span></div>
+    </div>
+    <div class="bar">
+      <button class="btn" onclick="openForm('event')">+ 建档事件</button>
+      <button class="btn ghost" onclick="exportCSV('event')">导出 CSV</button>
+      <button class="btn ghost" onclick="window.print()">打印 / PDF</button>
+    </div>
+    <div class="panel">
+      <h2>事件存证</h2>
+      <div class="psub">记录时间、地点、经过和待补充环节，导出 PDF 可用于沟通或理赔</div>
+      <div id="eventTable"></div>
+      <div class="printonly" id="eventSign"></div>
+    </div>
+  </div>
+
+  <!-- 数据管理 -->
+  <div class="data-section">
+    <h3>数据管理</h3>
+    <div class="data-actions">
+      <button class="btn ghost sm" id="installBtn" style="display:none" onclick="installApp()">安装到桌面</button>
+      <button class="btn ghost sm" onclick="exportBackup()">备份数据</button>
+      <button class="btn ghost sm" onclick="importBackup()">恢复数据</button>
+      <input type="file" id="importFile" accept=".json" style="display:none" onchange="handleImport(event)">
+      <button class="btn danger sm" onclick="clearAll()">清空所有数据</button>
+    </div>
+    <div class="hint" style="margin-top:8px">数据保存在当前浏览器本地存储中。建议定期备份，换浏览器或清除数据前请先导出。</div>
+  </div>
+
+  <div class="foot">
+    数据保存在当前浏览器本地存储（localStorage），换浏览器或清除数据会丢失；图片压缩后本地保存。导出的 CSV 可用 Excel/WPS 打开；"打印"可另存为 PDF，含签字栏、逐房间分页。<br>
+    三个安心习惯：1. 导出 PDF 自留一份；2. 邮件把 PDF 发给自己一份；3. 告诉一位家人文件在哪。不建云端账户，你的家庭信息只留在你自己的设备上。<br>
+    本页为产品原型：无账号、无网络请求、不上传。AI 视觉识别位标注为"端侧 OCR 预留"，当前人工填写；不做自动估价——保险公司按条款定损，AI 单一报价无约束力。
+  </div>
+</div>
+
+<!-- 升级专业版 -->
+<div class="mask" id="upgradeMask" onclick="if(event.target===this)closeMask('upgradeMask')">
+  <div class="modal" style="max-width:440px">
+    <button class="close" onclick="closeMask('upgradeMask')">×</button>
+    <h3>升级专业版</h3>
+    <div class="sub">免费版最多建档 3 件（物品 + 事件合计）。专业版不限数量，编辑、导出、备份始终免费。</div>
+    <div class="callout" id="upgradeState" style="margin-bottom:0"></div>
+    <div class="upgrade-field">
+      <input id="proCode" placeholder="输入激活码" autocomplete="off" onkeydown="if(event.key==='Enter')redeemCode()">
+      <button class="btn" onclick="redeemCode()">激活</button>
+    </div>
+    <div class="upgrade-demo">演示用激活码：<code>JIADI-PRO-2026</code><br>激活状态保存在本机浏览器，清除数据或换设备后需重新激活。正式收费时需改为服务端订单校验。</div>
+  </div>
+</div>
+
+<!-- 首次引导 -->
+<div class="mask" id="onboardMask" onclick="if(event.target===this)closeMask('onboardMask')">
+  <div class="modal" style="max-width:500px">
+    <div class="onboard-step on" data-s="0">
+      <div class="onboard-ill">你家的东西，大多没有发票</div>
+      <h3>「家底」能帮你做什么</h3>
+      <div class="sub">它不给你家产估值，只帮你把"有什么、在哪、什么型号、有没有凭证"记清楚，需要时随时拿得出来。</div>
+    </div>
+    <div class="onboard-step" data-s="1">
+      <div class="onboard-ill">四张照片：全景 · 铭牌 · 凭证 · 现状</div>
+      <h3>怎么建档</h3>
+      <div class="sub">每件物品拍四个角度，填几个字段。建议先从一个房间开始，20-30 件，约 10 分钟。优先记录没有凭证的物品。</div>
+    </div>
+    <div class="onboard-step" data-s="2">
+      <div class="onboard-ill">本地保存 · 导出 PDF · 邮件自寄</div>
+      <h3>数据存在哪</h3>
+      <div class="sub">全部存在你这台设备上，不上传。建议导出 PDF 存一份、邮件发自己一份，并告诉家人文件在哪。手机可能换、丢或坏，多留一份更安心。</div>
+    </div>
+    <div class="dots"><span id="obDots"><span class="dot on"></span><span class="dot"></span><span class="dot"></span></span></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px">
+      <button class="btn ghost" onclick="closeMask('onboardMask')">跳过</button>
+      <button class="btn" id="obNext" onclick="obNext()">下一步</button>
+    </div>
+  </div>
+</div>
+
+<!-- 建档表单 -->
+<div class="mask" id="formMask">
+  <div class="modal">
+    <button class="close" onclick="closeMask('formMask')">&times;</button>
+    <h3 id="formTitle">建档物品</h3>
+    <div class="sub" id="formSub"></div>
+    <div id="assetForm">
+      <div class="grid">
+        <div class="fld"><label>房间</label><input id="f-room" placeholder="如 客厅"></div>
+        <div class="fld"><label>品类</label><input id="f-cat" placeholder="如 电视 / 衣柜"></div>
+        <div class="fld"><label>品牌型号</label><input id="f-brand" placeholder="如 Sony 65&quot; X90"></div>
+        <div class="fld"><label>序列号</label><input id="f-serial" placeholder="铭牌上的 SN"></div>
+        <div class="fld"><label>购入年份</label><input id="f-year" placeholder="如 2021"></div>
+        <div class="fld"><label>来源</label>
+          <select id="f-source"><option>自购</option><option>二手</option><option>赠送</option><option>继承</option><option>定制</option><option>结婚收礼</option></select>
+        </div>
+        <div class="fld"><label>状态</label>
+          <select id="f-state"><option>在用</option><option>闲置</option><option>损坏</option></select>
+        </div>
+        <div class="fld"><label>凭证</label>
+          <select id="f-status"><option value="receipt">有凭证</option><option value="unk">无凭证（建议补录）</option></select>
+        </div>
+        <div class="fld"><label>凭证价（元，仅导出留档）</label><input id="f-price" type="number" placeholder="选填"></div>
+        <div class="fld"><label>现状描述</label><input id="f-cond" placeholder="如 屏幕无划痕 / 底座有锈"></div>
+        <div class="fld"><label>备注</label><input id="f-note" placeholder="选填"></div>
+      </div>
+      <div style="margin-top:14px">
+        <label>四角度证据照（点击各栏上传）</label>
+        <div class="shots" id="shots">
+          <div class="shot" data-k="overview"><span>① 全景<br>带房间参照</span><input type="file" accept="image/*"></div>
+          <div class="shot" data-k="plate"><span>② 铭牌<br>型号/序列号</span><input type="file" accept="image/*"></div>
+          <div class="shot" data-k="receipt"><span>③ 凭证<br>发票/订单</span><input type="file" accept="image/*"></div>
+          <div class="shot" data-k="condition"><span>④ 现状<br>磨损/新旧</span><input type="file" accept="image/*"></div>
+        </div>
+        <div class="hint">证据链：照片 + 建档时间 + 来源 + 凭证 + 状态。正式版在此自动读取铭牌型号、序列号、发票金额日期，并写入 EXIF 拍摄时间与位置；本原型由人工填写。</div>
+      </div>
+    </div>
+    <div id="eventForm" style="display:none">
+      <div class="grid two">
+        <div class="fld"><label>事件名称</label><input id="v-title" placeholder="如 快递破损"></div>
+        <div class="fld"><label>事件类型</label>
+          <select id="v-type"><option>快递破损</option><option>装修验收</option><option>租车还车</option><option>孩子在校</option><option>宠物就医</option><option>其他</option></select>
+        </div>
+        <div class="fld"><label>日期时间</label><input id="v-date" type="datetime-local"></div>
+        <div class="fld"><label>地点</label><input id="v-loc" placeholder="如 XX小区 3栋 502"></div>
+        <div class="fld" style="grid-column:1/-1"><label>经过描述</label><textarea id="v-desc" placeholder="发生了什么，现状如何"></textarea></div>
+        <div class="fld" style="grid-column:1/-1"><label>待补充环节（还应补拍什么）</label>
+          <input id="v-missing" placeholder="如 快递面单全景、破损特写、外箱六面（逗号分隔）">
+        </div>
+      </div>
+      <div style="margin-top:14px" id="linkWrap">
+        <label>关联物品（理赔时可一键查看对应证据，选填）</label>
+        <div class="linkbox" id="linkBox"></div>
+      </div>
+      <div style="margin-top:14px">
+        <label>证据照片（点击上传，可多张）</label>
+        <div class="shots" id="evShots">
+          <div class="shot" data-k="0"><span>+ 添加</span><input type="file" accept="image/*" multiple></div>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:20px;display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn ghost" onclick="closeMask('formMask')">取消</button>
+      <button class="btn" onclick="saveForm()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 证据查看 -->
+<div class="mask" id="eviMask">
+  <div class="modal">
+    <button class="close" onclick="closeMask('eviMask')">&times;</button>
+    <h3 id="eviTitle">证据照片</h3>
+    <div class="sub" id="eviSub"></div>
+    <div class="evi-grid" id="eviGrid"></div>
+  </div>
+</div>
+
+<!-- 定期复核 -->
+<div class="mask" id="reviewMask">
+  <div class="modal" style="max-width:540px">
+    <button class="close" onclick="closeMask('reviewMask')">&times;</button>
+    <h3>定期复核</h3>
+    <div class="sub">定期更新清单，才能让记录一直保持有用。下面这些值得确认一下是否还在、有没有变化。</div>
+    <div id="reviewBody"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const KEY='jiadi_v1', SEEN='jiadi_onboard_seen', NUDGE_BASE='jiadi_nudge_base';
+const PRO_KEY='jiadi_pro', USED_KEY='jiadi_used', FREE_LIMIT=3, DEMO_CODE='JIADI-PRO-2026';
+let DB=load();
+let editingId=null;
+
+function load(){try{return JSON.parse(localStorage.getItem(KEY))||{asset:[],event:[]}}catch(e){return{asset:[],event:[]}}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(DB))}catch(e){toast('本地存储不可用，数据仅保留在本次会话')}}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('on');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('on'),2400)}
+
+/* 额度：免费 3 件，专业版无限。只算新增；编辑不算、删除不返还、载入示例不算 */
+function isPro(){try{return localStorage.getItem(PRO_KEY)==='1'}catch(e){return false}}
+function usedCount(){try{return parseInt(localStorage.getItem(USED_KEY)||'0',10)||0}catch(e){return 0}}
+function setUsed(n){try{localStorage.setItem(USED_KEY,String(n))}catch(e){}}
+function bumpUsed(){if(!isPro())setUsed(usedCount()+1)}
+function canCreate(){return isPro()||usedCount()<FREE_LIMIT}
+function renderPlan(){
+  const tag=document.getElementById('planTag');if(!tag)return;
+  const btn=document.getElementById('planBtn'),desc=document.getElementById('planDesc');
+  if(isPro()){
+    tag.textContent='专业版';tag.classList.add('pro');
+    desc.innerHTML='已解锁<b>专业版</b>，建档数量不限。';
+    btn.textContent='已解锁';btn.classList.add('ghost');
+  }else{
+    tag.textContent='免费版';tag.classList.remove('pro');
+    const used=usedCount(),left=Math.max(0,FREE_LIMIT-used);
+    desc.innerHTML='已建档 <b>'+used+' / '+FREE_LIMIT+'</b> 件。'+(left?'还可建档 '+left+' 件，编辑和导出不限。':'额度已用完，升级专业版可继续建档。');
+    btn.textContent='升级专业版';btn.classList.remove('ghost');
+  }
+}
+function openUpgrade(){
+  const s=document.getElementById('upgradeState');if(!s)return;
+  s.innerHTML=isPro()?'当前已是专业版，建档数量不限。':'当前为免费版，已建档 '+usedCount()+' / '+FREE_LIMIT+' 件。';
+  document.getElementById('proCode').value='';
+  document.getElementById('upgradeMask').classList.add('on');
+}
+function redeemCode(){
+  const v=(document.getElementById('proCode').value||'').trim().toUpperCase();
+  if(v!==DEMO_CODE){toast('激活码不正确');return}
+  try{localStorage.setItem(PRO_KEY,'1')}catch(e){toast('本机存储不可用，激活仅本次有效')}
+  closeMask('upgradeMask');renderPlan();toast('已解锁专业版，建档数量不限');
+}
+
+function compress(file,cb){
+  const r=new FileReader();
+  r.onload=e=>{const img=new Image();img.onload=()=>{
+    const max=640,sc=Math.min(1,max/Math.max(img.width,img.height));
+    const c=document.createElement('canvas');c.width=img.width*sc;c.height=img.height*sc;
+    c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+    cb(c.toDataURL('image/jpeg',0.6));
+  };img.src=e.target.result};
+  r.readAsDataURL(file);
+}
+
+/* 引导 */
+let obStep=0;
+function obNext(){
+  obStep++;
+  if(obStep>2){closeMask('onboardMask');try{localStorage.setItem(SEEN,'1')}catch(e){}return}
+  document.querySelectorAll('.onboard-step').forEach((el,i)=>el.classList.toggle('on',i===obStep));
+  const dots=document.getElementById('obDots');
+  dots.innerHTML=[0,1,2].map(i=>'<span class="dot'+(i===obStep?' on':'')+'"></span>').join('');
+  document.getElementById('obNext').textContent=obStep===2?'开始使用':'下一步';
+}
+try{if(localStorage.getItem(SEEN))document.getElementById('onboardMask').classList.remove('on')}catch(e){}
+
+/* Tab */
+let cur='asset';
+function switchTab(t){
+  cur=t;
+  document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x.dataset.t===t));
+  document.getElementById('view-asset').style.display=t==='asset'?'':'none';
+  document.getElementById('view-event').style.display=t==='event'?'':'none';
+  render();
+}
+function closeMask(id){document.getElementById(id).classList.remove('on')}
+function openOnboard(){obStep=0;document.querySelectorAll('.onboard-step').forEach((el,i)=>el.classList.toggle('on',i===0));document.getElementById('obDots').innerHTML=[0,1,2].map(i=>'<span class="dot'+(i===0?' on':'')+'"></span>').join('');document.getElementById('obNext').textContent='下一步';document.getElementById('onboardMask').classList.add('on')}
+
+/* 表单 */
+let shotData={},evData=[],evLinkedIds=[];
+function openForm(type,editId){
+  if(!editId&&!canCreate()){openUpgrade();return}
+  editingId=editId||null;
+  const isEdit=!!editingId;
+  document.getElementById('formTitle').textContent=
+    type==='asset'?(isEdit?'编辑物品':'建档物品'):(isEdit?'编辑事件':'建档事件');
+  document.getElementById('formSub').textContent=type==='asset'
+    ? '四个角度：全景 / 铭牌 / 凭证 / 现状。优先记录没有凭证的物品。'
+    : '记录事件要素与待补充环节。正式版时间戳与定位自动写入。';
+  document.getElementById('assetForm').style.display=type==='asset'?'':'none';
+  document.getElementById('eventForm').style.display=type==='event'?'':'none';
+  shotData={};evData=[];
+
+  if(isEdit){
+    const item=DB[type].find(x=>x.id===editingId);
+    if(item&&type==='asset'){
+      document.getElementById('f-room').value=item.room||'';
+      document.getElementById('f-cat').value=item.cat||'';
+      document.getElementById('f-brand').value=item.brand||'';
+      document.getElementById('f-serial').value=item.serial||'';
+      document.getElementById('f-year').value=item.year||'';
+      document.getElementById('f-source').value=item.source||'自购';
+      document.getElementById('f-state').value=item.state||'在用';
+      document.getElementById('f-status').value=item.status||'unk';
+      document.getElementById('f-price').value=item.price||'';
+      document.getElementById('f-cond').value=item.cond||'';
+      document.getElementById('f-note').value=item.note||'';
+      shotData=item.photos||{};
+    }else if(item&&type==='event'){
+      document.getElementById('v-title').value=item.title||'';
+      document.getElementById('v-type').value=item.type||'其他';
+      document.getElementById('v-date').value=item.date||'';
+      document.getElementById('v-loc').value=item.loc||'';
+      document.getElementById('v-desc').value=item.desc||'';
+      document.getElementById('v-missing').value=(item.missing||[]).join(', ');
+      evData=item.photos||[];
+      evLinkedIds=(item.linked||[]).slice();
+    }
+  }else{
+    ['f-room','f-cat','f-brand','f-serial','f-year','f-price','f-cond','f-note','v-title','v-date','v-loc','v-desc','v-missing'].forEach(id=>{
+      const el=document.getElementById(id);if(el)el.value='';
+    });
+    document.getElementById('f-source').value='自购';
+    document.getElementById('f-state').value='在用';
+    document.getElementById('f-status').value='receipt';
+    evLinkedIds=[];
+  }
+
+  renderShots();
+  if(type==='event')renderLinks();
+  document.getElementById('formMask').classList.add('on');
+}
+function renderShots(){
+  document.querySelectorAll('#shots .shot').forEach(el=>{
+    const k=el.dataset.k,old=el.querySelector('img');if(old)old.remove();
+    if(shotData[k]){const im=document.createElement('img');im.src=shotData[k];el.insertBefore(im,el.firstChild)}
+  });
+  const box=document.getElementById('evShots');box.innerHTML='';
+  evData.forEach((src,i)=>{const d=document.createElement('div');d.className='shot';
+    d.innerHTML='<img src="'+src+'"><span class="lbl">'+(i+1)+'</span>';box.appendChild(d)});
+  const add=document.createElement('div');add.className='shot';add.innerHTML='<span>+ 添加</span>';
+  const inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.multiple=true;add.appendChild(inp);box.appendChild(add);
+  bindShots();
+}
+function bindShots(){
+  document.querySelectorAll('#shots .shot').forEach(el=>{
+    const inp=el.querySelector('input');if(!inp)return;
+    inp.onchange=e=>{const k=el.dataset.k,f=e.target.files[0];
+      if(f)compress(f,d=>{shotData[k]=d;renderShots()})};
+    el.onclick=e=>{if(e.target!==inp)inp.click()};
+  });
+  const addBox=document.querySelector('#evShots .shot:last-child');
+  const addInp=addBox?addBox.querySelector('input'):null;
+  if(addInp){
+    addInp.onchange=e=>{let n=e.target.files.length;if(!n)return;
+      [...e.target.files].forEach(f=>compress(f,d=>{evData.push(d);if(--n===0)renderShots()}))};
+    addBox.onclick=e=>{if(e.target!==addInp)addInp.click()};
+  }
+}
+document.addEventListener('DOMContentLoaded',bindShots);
+function renderLinks(){
+  const box=document.getElementById('linkBox');if(!box)return;
+  if(!DB.asset.length){box.innerHTML='<span class="link-empty">还没有建档物品。先在「物品清点」建档，就能在这里关联。</span>';return}
+  box.innerHTML=DB.asset.map(a=>{
+    const on=evLinkedIds.indexOf(a.id)>=0;
+    return '<label class="'+(on?'sel':'')+'"><input type="checkbox" value="'+a.id+'"'+(on?' checked':'')+'>'+esc((a.room||'未填房间')+' · '+(a.cat||'')+' '+(a.brand||''))+'</label>';
+  }).join('');
+  box.querySelectorAll('input').forEach(inp=>{
+    inp.onchange=()=>{
+      const id=inp.value;
+      if(inp.checked){if(evLinkedIds.indexOf(id)<0)evLinkedIds.push(id)}
+      else{evLinkedIds=evLinkedIds.filter(x=>x!==id)}
+      inp.parentElement.classList.toggle('sel',inp.checked);
+    };
+  });
+}
+
+function saveForm(){
+  if(cur==='asset'){
+    const it={id:editingId||uid(),room:val('f-room'),cat:val('f-cat'),brand:val('f-brand'),serial:val('f-serial'),
+      year:val('f-year'),source:val('f-source'),state:val('f-state'),price:val('f-price'),
+      status:val('f-status'),cond:val('f-cond'),note:val('f-note'),photos:shotData,
+      created:editingId?(DB.asset.find(x=>x.id===editingId)||{}).created||Date.now():Date.now(),reviewed:editingId?(DB.asset.find(x=>x.id===editingId)||{}).reviewed||null:null};
+    if(!it.cat&&!it.brand){toast('至少填写品类或品牌型号');return}
+    if(editingId){
+      const idx=DB.asset.findIndex(x=>x.id===editingId);
+      if(idx>=0)DB.asset[idx]=it;
+      toast('已更新');
+    }else{
+      DB.asset.unshift(it);bumpUsed();toast('已建档');
+    }
+  }else{
+    const ev={id:editingId||uid(),title:val('v-title'),type:val('v-type'),date:val('v-date'),loc:val('v-loc'),
+      desc:val('v-desc'),missing:val('v-missing').split(/[,，]/).map(s=>s.trim()).filter(Boolean),
+      photos:evData,linked:evLinkedIds.slice(),created:editingId?(DB.event.find(x=>x.id===editingId)||{}).created||Date.now():Date.now()};
+    if(!ev.title){toast('请填写事件名称');return}
+    if(editingId){
+      const idx=DB.event.findIndex(x=>x.id===editingId);
+      if(idx>=0)DB.event[idx]=ev;
+      toast('已更新');
+    }else{
+      DB.event.unshift(ev);bumpUsed();toast('已建档');
+    }
+  }
+  save();closeMask('formMask');render();editingId=null;
+}
+function val(id){return document.getElementById(id).value.trim()}
+
+/* 示例 */
+function loadDemo(){
+  if(DB.asset.length&&!confirm('当前已有数据，载入示例会覆盖，是否继续？'))return;
+  DB.asset=[
+    {id:uid(),room:'客厅',cat:'电视',brand:'Sony 65" X90',serial:'SN-88213',year:'2021',source:'自购',state:'在用',price:'6500',status:'receipt',cond:'屏幕无划痕',note:'',photos:{},created:Date.now(),reviewed:null},
+    {id:uid(),room:'客厅',cat:'沙发',brand:'定制布艺三人位',serial:'',year:'2019',source:'定制',state:'在用',price:'',status:'unk',cond:'扶手有磨损',note:'装修时打的，无票据',photos:{},created:Date.now(),reviewed:null},
+    {id:uid(),room:'客厅',cat:'餐桌',brand:'实木 1.6m',serial:'',year:'2018',source:'二手',state:'在用',price:'',status:'unk',cond:'桌面有划痕',note:'闲鱼收的',photos:{},created:Date.now(),reviewed:null},
+    {id:uid(),room:'客厅',cat:'洗衣机',brand:'西门子 8kg',serial:'WM-4421',year:'2016',source:'结婚收礼',state:'在用',price:'',status:'unk',cond:'运转正常',note:'发票找不到了',photos:{},created:Date.now(),reviewed:null},
+    {id:uid(),room:'客厅',cat:'瓷瓶',brand:'景德镇青花',serial:'',year:'',source:'继承',state:'闲置',price:'',status:'unk',cond:'完整无磕',note:'奶奶留下的',photos:{},created:Date.now(),reviewed:null}
+  ];
+  save();render();toast('已载入 5 件示例（4 件待补凭证），示例不占免费额度');
+}
+
+/* 标签筛选 */
+let curFilter='all';
+function setFilter(f){curFilter=f;document.querySelectorAll('#filters .chip').forEach(b=>b.classList.toggle('on',b.dataset.f===f));render()}
+function getFilterQuery(){
+  if(curFilter==='noreceipt')return x=>x.status!=='receipt';
+  if(curFilter==='used')return x=>['二手','赠送','继承','定制','结婚收礼'].includes(x.source);
+  return null;
+}
+/* 搜索 */
+function getSearchQuery(){
+  const el=document.getElementById('searchInput');
+  return el?el.value.trim().toLowerCase():'';
+}
+
+/* 渲染 */
+function render(){
+  const q=getSearchQuery(),f=getFilterQuery();
+  const base=f?DB.asset.filter(f):DB.asset;
+  const filteredAssets=q?base.filter(x=>
+    (x.room||'').toLowerCase().includes(q)||
+    (x.cat||'').toLowerCase().includes(q)||
+    (x.brand||'').toLowerCase().includes(q)||
+    (x.serial||'').toLowerCase().includes(q)||
+    (x.note||'').toLowerCase().includes(q)||
+    (x.cond||'').toLowerCase().includes(q)
+  ):base;
+
+  document.getElementById('s-count').textContent=DB.asset.length;
+  document.getElementById('s-receipt').textContent=DB.asset.filter(x=>x.status==='receipt').length;
+  document.getElementById('s-noreceipt').textContent=DB.asset.filter(x=>x.status!=='receipt').length;
+
+  const rooms=[...new Set(filteredAssets.map(x=>x.room||'未填房间'))];
+  const byRoom=rooms.map(r=>({r,items:filteredAssets.filter(x=>(x.room||'未填房间')===r)}));
+  document.getElementById('assetTable').innerHTML=filteredAssets.length?byRoom.map(g=>`
+    <div class="room-block">
+      <h3 style="font-size:13.5px;margin:8px 0 10px;color:var(--brand-d);font-weight:700">${esc(g.r)} · ${g.items.length} 件</h3>
+      <table><thead><tr><th>编号</th><th>品类 / 品牌型号</th><th>序列号</th><th>来源</th><th>状态</th><th>凭证</th><th>证据</th><th></th></tr></thead><tbody>
+      ${g.items.map((x,i)=>{
+        const tag=x.status==='receipt'?'<span class="tag receipt">有凭证</span>':'<span class="tag none">待补凭证</span>';
+        const pc=Object.keys(x.photos||{}).length;
+        return `<tr><td>A${String(DB.asset.indexOf(x)+1).padStart(3,'0')}</td>
+          <td>${esc(x.cat)} ${esc(x.brand)}</td><td>${esc(x.serial)}</td><td>${esc(x.source)}</td>
+          <td>${esc(x.state)}</td><td>${tag}</td>
+          <td class="evid" onclick="viewEvi('asset','${x.id}')">${pc?pc+'张':'无'}</td>
+          <td class="rowact"><button class="edit-btn" onclick="openForm('asset','${x.id}')">编辑</button><button onclick="del('asset','${x.id}')">删除</button></td></tr>`}).join('')}
+      </tbody></table>
+    </div>`).join('')+'<div class="hint">界面不显示金额——记录"有什么"即可，避免"估得准不准"的争议。凭证价仅存于导出文件供自己留档。</div>'
+    :'<div class="empty">'+(q?'没有搜索到匹配的物品':(curFilter!=='all'?'这个筛选下还没有物品':'还没有建档，点击「建档物品」开始，或先「载入示例」看看效果。'))+'</div>';
+
+  document.getElementById('assetSign').innerHTML='<p style="margin-top:16px">编制人签字：____________ 核对人签字：____________ 日期：____________</p>';
+
+  document.getElementById('e-count').textContent=DB.event.length;
+  document.getElementById('e-photo').textContent=DB.event.reduce((s,x)=>s+(x.photos||[]).length,0);
+  document.getElementById('e-missing').textContent=DB.event.reduce((s,x)=>s+(x.missing||[]).length,0);
+  document.getElementById('eventTable').innerHTML=DB.event.length?DB.event.map(x=>`
+    <div style="border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:12px;transition:box-shadow .2s" onmouseenter="this.style.boxShadow='var(--shadow-md)'" onmouseleave="this.style.boxShadow='none'">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+        <div><b style="font-size:14.5px">${esc(x.title)}</b> <span class="tag gray">${esc(x.type)}</span>
+          <div style="color:var(--muted);font-size:12px;margin-top:4px">${esc((x.date||'').replace('T',' '))} · ${esc(x.loc)}</div></div>
+        <div style="display:flex;gap:4px">
+          <button class="btn sm ghost" onclick="openForm('event','${x.id}')">编辑</button>
+          <button class="btn sm danger" onclick="del('event','${x.id}')">删除</button>
+        </div>
+      </div>
+      ${x.desc?`<p style="margin:10px 0 4px;font-size:13px;color:var(--ink);line-height:1.6">${esc(x.desc)}</p>`:''}
+      ${(x.missing||[]).length?`<ul class="checklist">${x.missing.map(m=>`<li>${esc(m)}</li>`).join('')}</ul>`:''}
+      ${(x.linked||[]).length?`<div class="linked-chips">${x.linked.map(id=>{const a=DB.asset.find(y=>y.id===id);return a?'<span class="linked-chip" onclick="viewEvi(\'asset\',\''+id+'\')">'+esc((a.cat||'物品')+' '+(a.brand||''))+'</span>':''}).join('')}</div>`:''}
+      <div style="margin-top:10px"><span class="evid" onclick="viewEvi('event','${x.id}')">查看证据照片（${(x.photos||[]).length}）</span></div>
+    </div>`).join(''):'<div class="empty">还没有建档事件。</div>';
+  document.getElementById('eventSign').innerHTML='<p style="margin-top:16px">双方签字：____________ / ____________ 日期：____________</p>';
+  checkNudge();renderPlan();
+}
+/* 备份温和高亮：每新增 10 条提醒一次，绝不弹窗打断 */
+function nudgeBase(){try{return parseInt(localStorage.getItem(NUDGE_BASE)||'0',10)||0}catch(e){return 0}}
+function setNudgeBase(){try{localStorage.setItem(NUDGE_BASE,String(DB.asset.length+DB.event.length))}catch(e){}checkNudge()}
+function checkNudge(){
+  const el=document.getElementById('backupNudge');if(!el)return;
+  const total=DB.asset.length+DB.event.length,base=nudgeBase();
+  const show=total>=10&&total-base>=10;
+  el.classList.toggle('on',show);
+  if(show)document.getElementById('nudgeMsg').innerHTML='已经建档 <b>'+total+'</b> 件了。数据只存在这台设备，建议现在导出一份备份——换设备或清缓存也不怕丢。';
+}
+function nudgeBackup(){exportBackup();setNudgeBase();}
+function nudgeLater(){setNudgeBase();toast('好的，再建档 10 件时提醒你')}
+
+function viewEvi(type,id){
+  const it=DB[type].find(x=>x.id===id);if(!it)return;
+  const pics=type==='asset'
+    ? Object.entries(it.photos||{}).map(([k,v])=>({v,l:{overview:'① 全景',plate:'② 铭牌',receipt:'③ 凭证',condition:'④ 现状'}[k]||k}))
+    : (it.photos||[]).map((v,i)=>({v,l:'照片 '+(i+1)}));
+  document.getElementById('eviTitle').textContent=type==='asset'?(it.cat+' '+it.brand):it.title;
+  document.getElementById('eviSub').textContent=type==='asset'
+    ? `${it.year||'年份未知'} · ${esc(it.source||'自购')} · ${esc(it.state||'在用')} · ${it.status==='receipt'?'有凭证':'待补凭证'} · 建档 ${new Date(it.created).toLocaleDateString('zh-CN')}`
+    : `${esc((it.date||'').replace('T',' '))} · ${esc(it.loc)}`;
+  document.getElementById('eviGrid').innerHTML=pics.length?pics.map(p=>`<figure><img src="${p.v}"><figcaption>${esc(p.l)}</figcaption></figure>`).join(''):'<div class="empty">还没有证据照片</div>';
+  document.getElementById('eviMask').classList.add('on');
+}
+function del(type,id){if(!confirm('确认删除这条记录？'))return;DB[type]=DB[type].filter(x=>x.id!==id);save();render();toast('已删除')}
+
+/* 定期复核 */
+function openReview(){
+  const now=new Date().getFullYear();
+  const stale=DB.asset.filter(x=>{
+    const y=parseInt(x.year);const age=(!isNaN(y))?now-y:99;
+    return age>=5 || x.status!=='receipt';
+  });
+  const body=document.getElementById('reviewBody');
+  if(!DB.asset.length){body.innerHTML='<div class="empty">还没有建档，先记录几件再来复核。</div>'}
+  else if(!stale.length){body.innerHTML='<div class="empty">所有记录状态良好，暂无需要复核的项目。</div>'}
+  else{
+    body.innerHTML='<ul class="checklist">'+stale.map(x=>{
+      const y=parseInt(x.year);const age=(!isNaN(y))?now-y:null;
+      const why=age!==null&&age>=5?('已购入 '+age+' 年'):'待补凭证';
+      return `<li>${esc(x.cat)} ${esc(x.brand)} <span class="tag none" style="margin-left:auto">${why}</span> <button class="btn sm ghost" onclick="markReviewed('${x.id}')">已核对</button></li>`
+    }).join('')+'</ul><div class="hint">点击「已核对」记录本次复核时间，一年后再提醒。</div>';
+  }
+  document.getElementById('reviewMask').classList.add('on');
+}
+function markReviewed(id){const it=DB.asset.find(x=>x.id===id);if(it){it.reviewed=Date.now();save();openReview();toast('已记录复核时间')}}
+
+/* 数据备份/恢复 */
+function exportBackup(){
+  const data=JSON.stringify(Object.assign({},DB,{pro:isPro()?'1':'0',used:usedCount()}),null,2);
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([data],{type:'application/json'}));
+  a.download='家底备份_'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();toast('备份已导出');setNudgeBase();
+}
+function importBackup(){document.getElementById('importFile').click()}
+function handleImport(e){
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    try{
+      const d=JSON.parse(ev.target.result);
+      if(!d.asset||!d.event){toast('文件格式不正确');return}
+      if(DB.asset.length||DB.event.length){
+        if(!confirm('恢复备份会覆盖当前数据，是否继续？'))return;
+      }
+      DB={asset:d.asset,event:d.event};
+      try{if(d.pro==='1'||d.pro===1)localStorage.setItem(PRO_KEY,'1');if(typeof d.used==='number'&&isFinite(d.used)&&d.used>=0)localStorage.setItem(USED_KEY,String(Math.floor(d.used)))}catch(e){}
+      save();render();toast('数据已恢复');
+    }catch(err){toast('文件解析失败')}
+  };
+  r.readAsText(f);
+  e.target.value='';
+}
+function clearAll(){
+  if(!confirm('确认清空所有数据？此操作不可撤销。'))return;
+  if(!confirm('再次确认：所有物品和事件记录都将被删除。'))return;
+  DB={asset:[],event:[]};save();render();toast('数据已清空');
+}
+
+/* 导出 */
+function exportCSV(type){
+  const now=new Date().toLocaleString('zh-CN');
+  const rows=type==='asset'
+    ? [['家底 · 物品清点表'],['生成时间',now,'','编制人:____________','','核对人:____________'],
+       ['编号','房间','品类','品牌型号','序列号','来源','状态','购入年','凭证','凭证价(自留)','现状/备注','建档时间','复核时间'],
+       ...DB.asset.map((x,i)=>['A'+(DB.asset.indexOf(x)+1),x.room,x.cat,x.brand,x.serial,x.source,x.state,x.year,
+         x.status==='receipt'?'有':'无',x.price,(x.cond||'')+' '+(x.note||''),
+         new Date(x.created).toLocaleDateString('zh-CN'),x.reviewed?new Date(x.reviewed).toLocaleDateString('zh-CN'):'']),
+       [''],['签字栏：本人确认以上清单为真实清点 签署日期 ____________']]
+    : [['生活事件存证表'],['生成时间',now],
+       ['事件','类型','日期时间','地点','经过描述','待补充环节','关联物品','照片数'],
+       ...DB.event.map(x=>[x.title,x.type,(x.date||'').replace('T',' '),x.loc,x.desc,(x.missing||[]).join(' / '),(x.linked||[]).map(id=>{const a=DB.asset.find(y=>y.id===id);return a?((a.cat||'物品')+' '+(a.brand||'')):''}).filter(Boolean).join(' / '),(x.photos||[]).length]),
+       [''],['签字栏：双方签署 ____________ / ____________ 日期 ____________']];
+  const csv='\uFEFF'+rows.map(r=>r.map(c=>'"'+String(c==null?'':c).replace(/"/g,'""')+'"').join(',')).join('\r\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+  a.download=(type==='asset'?'家底清单_':'事件存证_')+new Date().toISOString().slice(0,10)+'.csv';a.click();
+  toast('CSV 已导出');
+}
+
+render();
+</script>
+<script>
+if('serviceWorker' in navigator&&location.protocol!=='file:'){
+  window.addEventListener('load',function(){navigator.serviceWorker.register('./sw.js').catch(function(){})});
+}
+var deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferredPrompt=e;var b=document.getElementById('installBtn');if(b)b.style.display=''});
+function installApp(){
+  if(!deferredPrompt){toast('请在浏览器菜单里选「添加到主屏幕」');return}
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(function(){deferredPrompt=null});
+}
+</script>
+</body>
+</html>
